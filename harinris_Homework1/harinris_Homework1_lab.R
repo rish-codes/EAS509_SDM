@@ -1,0 +1,189 @@
+#' ---
+#' title: "harinris_Homework1_lab"
+#' author: "Harin Rishabh"
+#' date: "2024-02-09"
+#' output:
+#'   html_document: default
+#'   pdf_document: default
+#' ---
+#' 
+#' # 12.5 Lab: Unsupervised Learning
+#' ## 12.5.1 Principal Components Analysis
+#' 
+#' We are using the USArrests Dataset. We are calculating mean and variance.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+states <- row.names(USArrests)
+apply(USArrests , 2, mean)
+apply(USArrests , 2, var)
+
+#' 
+#' We now perform principal components analysis using the prcomp() function. pr.out$rotation contains the corresponding principal component
+#' loading vector. Then we plot the first two principal components.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+pr.out <- prcomp(USArrests , scale = TRUE)
+names(pr.out)
+pr.out$rotation
+biplot(pr.out , scale = 0)
+
+#' 
+#' Calculating STD and var of each principal component.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+pr.out$sdev
+pr.var <- pr.out$sdev^2
+pr.var
+
+#' 
+#' Computing the proportion of variance explained by each principal component. We see that the first principal component explains 62.0% of the variance in the data, the next principal component explains 24.7% of the variance, etc.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+pve <- pr.var / sum(pr.var)
+pve
+
+#' 
+#' Plotting the PVE explained by each component, as well as the cumulative PVE.
+## plot(pve , xlab = "Principal Component", ylab = "Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+## plot(cumsum(pve), xlab = "Principal Component", ylab = "Cumulative Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+#' 
+#' ## 12.5.2 Matrix Completion
+#' 
+#' Turning the data frame into a matrix, after centering and scaling each column to have mean zero and variance one.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+X <- data.matrix(scale(USArrests))
+pcob <- prcomp(X)
+summary(pcob)
+
+#' 
+#' Using SVD
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+sX <- svd(X)
+names(sX)
+round(sX$v, 3)
+pcob$rotation
+
+#' 
+#' We now omit 20 entries in the 50 × 2 data matrix at random. We do so by first selecting 20 rows (states) at random, and then selecting one of
+#' the four entries in each row at random. This ensures that every row has at least three observed values.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+nomit <- 20
+set.seed (15)
+ina <- sample(seq (50) , nomit)
+inb <- sample (1:4, nomit , replace = TRUE)
+Xna <- X
+index.na <- cbind(ina , inb)
+Xna[index.na] <- NA
+
+#' 
+#' We first write a function that takes in a matrix, and returns an approximation to the matrix using the svd() function.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+fit.svd <- function(X, M = 1) {
+  svdob <-svd(X)
+  with(svdob ,
+  u[, 1:M, drop = FALSE] %*%
+  (d[1:M] * t(v[, 1:M, drop = FALSE ])))
+}
+
+#' 
+#' Step 1 of algorithm
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+Xhat <- Xna
+xbar <- colMeans(Xna , na.rm = TRUE)
+Xhat[index.na] <- xbar[inb]
+
+#' 
+#' Measuring progress of our iterations
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+thresh <- 1e-7
+rel_err <- 1
+iter <- 0
+ismiss <- is.na(Xna)
+mssold <- mean (( scale(Xna , xbar , FALSE)[!ismiss])^2)
+mss0 <- mean(Xna[!ismiss ]^2)
+
+#' 
+#' Step 2
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+while(rel_err > thresh) {
+  iter <- iter + 1
+# Step 2(a)
+  Xapp <- fit.svd(Xhat , M = 1)
+# Step 2(b)
+  Xhat [ ismiss ] <- Xapp [ ismiss ]
+# Step 2(c)
+  mss <- mean ((( Xna - Xapp)[! ismiss ])^2)
+  rel_err <- ( mssold - mss ) / mss0
+  mssold <- mss
+  cat("Iter:", iter, "MSS:", mss,
+  "Rel. Err:", rel_err, "\n")
+}
+
+#' 
+#' Finally, we compute the correlation between the 20 imputed values and the actual values.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+cor(Xapp[ismiss], X[ismiss])
+
+#' 
+#' ## 12.5.3 Clustering
+#' 
+#' We begin with a simple simulated example in which there truly are two clusters in the data: the first 25 observations have a mean shift relative to the next 25 observations.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+set.seed (2)
+x <- matrix(rnorm (50 * 2), ncol = 2)
+x[1:25, 1] <- x[1:25, 1] + 3
+x[1:25, 2] <- x[1:25, 2] - 4
+
+#' 
+#' We now perform K-means clustering with K = 2.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+km.out <- kmeans(x, 2, nstart = 20)
+km.out$cluster
+par(mfrow = c(1, 2))
+plot(x, col = (km.out$cluster + 1), main = "K-Means Clustering Results with K = 2", xlab = "", ylab = "", pch = 20, cex = 2)
+
+#' 
+#' Clustering with k=3.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+set.seed (4)
+km.out <- kmeans(x, 3, nstart = 20)
+km.out
+plot(x, col = (km.out$cluster + 1),
+main = "K-Means Clustering Results with K = 3",
+xlab = "", ylab = "", pch = 20, cex = 2)
+
+#' 
+#' ## Hierarchial Clusterig
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+hc.complete <- hclust(dist(x), method = "complete")
+hc.average <- hclust(dist(x), method = "average")
+hc.single <- hclust(dist(x), method = "single")
+par(mfrow = c(1, 3))
+plot(hc.complete , main = "Complete Linkage",
+xlab = "", sub = "", cex = .9)
+plot(hc.average , main = "Average Linkage",
+xlab = "", sub = "", cex = .9)
+plot(hc.single, main = "Single Linkage",
+xlab = "", sub = "", cex = .9)
+
+#' 
+#' To determine the cluster labels for each observation associated with a given cut of the dendrogram, we can use the cutree() function.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+cutree(hc.complete , 2)
+cutree(hc.average , 2)
+cutree(hc.single, 2)
+cutree(hc.single, 4)
+
+#' 
+#' Scaling
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+xsc <- scale(x)
+plot(hclust(dist(xsc), method = "complete"),
+main = "Hierarchical Clustering with Scaled Features")
+
+#' 
+#' Correlation-based distance can be computed using the as.dist() function, which converts an arbitrary square symmetric matrix into a form that
+#' the hclust() function recognizes as a distance matrix.
+## ---------------------------------------------------------------------------------------------------------------------------------------------
+x <- matrix(rnorm (30 * 3), ncol = 3)
+dd <- as.dist (1 - cor(t(x)))
+plot(hclust(dd, method = "complete"),
+main = "Complete Linkage with Correlation -Based Distance",
+xlab = "", sub = "")
+
