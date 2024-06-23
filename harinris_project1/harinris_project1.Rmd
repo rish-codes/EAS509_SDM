@@ -1,0 +1,270 @@
+---
+title: "harinris_project1"
+author: "Harin Rishabh"
+date: "2024-04-11"
+output: html_document
+---
+
+## Ingesting dataset
+```{r}
+library(readxl)
+excel_file = "Mine_dataset.xls"
+df = read_excel(excel_file, sheet=2)
+```
+
+## Data pre-processing
+```{r}
+names(df) = c("Voltage", "Height", "Soil_Type", "Landmine_Type")
+df$Landmine_Type = factor(df$Landmine_Type)
+```
+
+Looks like Soil Type feature was accidentally normalized. Converting it back to a categorical feature with 6 values.
+```{r}
+df$Soil_Type = cut(as.numeric(df$Soil_Type), 6, labels = FALSE)
+df$Soil_Type = factor(df$Soil_Type)
+df
+```
+
+## Data Exploration and Analysis
+```{r}
+head(df)
+```
+```{r}
+summary(df)
+```
+
+```{r}
+# Checking for columns with any missing values
+colSums(is.na(df))
+```
+
+
+```{r}
+# Histogram for Height
+hist(df$Height, main="Histogram of Height", xlab="Height")
+```
+
+
+```{r}
+# Histogram for Voltage
+hist(df$Voltage, main="Histogram of Voltage", xlab="Voltage")
+```
+
+```{r}
+# Boxplot for Voltage
+boxplot(df$Voltage, main="Boxplot of Voltage")
+```
+
+Voltage column has a few outliers. We need to remove these. For this, we use IQR technique.
+```{r}
+# Calculate the interquartile range (IQR)
+Q1 <- quantile(df$Voltage, 0.25)
+Q3 <- quantile(df$Voltage, 0.75)
+IQR <- Q3 - Q1
+
+# Define the lower and upper bounds for outliers
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+
+# Remove outliers
+df <- df[df$Voltage >= lower_bound & df$Voltage <= upper_bound, ]
+```
+
+```{r}
+# Boxplot for Height
+boxplot(df$Height, main="Boxplot of Height")
+```
+
+
+```{r}
+# Bar plot and Box plot for Soil Type
+barplot(table(df$Soil_Type), main="Distribution of Soil Types", xlab="Soil Type")
+```
+
+```{r}
+# Box plot for examining distributions
+library(ggplot2)
+ggplot(df, aes(x = Soil_Type, y = Height, fill = Soil_Type)) + geom_boxplot()
+```
+
+```{r}
+
+# Using ggplot2 for a faceted scatter plot
+ggplot(df, aes(x = Voltage, y = Height, color = Landmine_Type)) +
+    geom_point() +
+    facet_wrap(~Soil_Type)
+```
+
+Creating test and train splits
+```{r}
+sample = sample(c(TRUE, FALSE), nrow(df), replace=TRUE, prob=c(0.75,0.25))
+train_data = df[sample, ]
+test_data = df[!sample, ]
+dim(train_data)
+dim(test_data)
+```
+
+# Running classification models
+
+## Naive Bayes Classifier
+```{r}
+library(naivebayes)
+
+# Train the Naive Bayes classifier
+nb_model <- naive_bayes(Landmine_Type ~ ., data = train_data)
+
+# Make predictions on the test data
+nb_predictions <- predict(nb_model, newdata = test_data)
+
+# View the predictions
+head(nb_predictions)
+```
+
+Printing evaluation metrics
+```{r}
+library(caret)
+
+# Define a confusion matrix
+conf_matrix_nb = confusionMatrix(data = nb_predictions, reference = test_data$Landmine_Type)
+conf_matrix_nb
+
+# Extract accuracy
+accuracy = conf_matrix_nb$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+## Support Vector Classsification
+```{r}
+library(e1071)
+
+# Train the SVM classifier
+svm_model <- svm(Landmine_Type ~ ., data = train_data)
+
+# Make predictions on the test data
+svm_predictions <- predict(svm_model, newdata = test_data)
+
+# View the predictions
+head(svm_predictions)
+```
+
+Printing evaluation metrics
+```{r}
+# Define a confusion matrix
+conf_matrix_svm = confusionMatrix(data = svm_predictions, reference = test_data$Landmine_Type)
+conf_matrix_svm
+
+# Extract accuracy
+accuracy = conf_matrix_svm$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+## K-nearest neighbours
+```{r}
+library(class)
+# Train the KNN classifier
+knn_model <- knn(train = train_data[, -4], test = test_data[, -4], cl = train_data$Landmine_Type, k = 5)
+
+# View the predictions
+head(knn_model)
+```
+
+Printing evaluation metrics
+```{r}
+# Define a confusion matrix
+conf_matrix_knn = confusionMatrix(data = knn_model, reference = test_data$Landmine_Type)
+conf_matrix_knn
+
+# Extract accuracy
+accuracy = conf_matrix_knn$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+## Logistic Regression
+```{r}
+library(nnet)
+
+# Train the multinomial logistic regression model
+logit_model <- multinom(Landmine_Type ~ ., data = train_data)
+
+# Make predictions on the test data
+logit_predictions <- predict(logit_model, newdata = test_data, type = "class")
+
+# View the predictions
+head(logit_predictions)
+```
+
+Printing evaluation metrics
+```{r}
+# Define a confusion matrix
+conf_matrix_logit = confusionMatrix(data = logit_predictions, reference = test_data$Landmine_Type)
+conf_matrix_logit
+
+# Extract accuracy
+accuracy = conf_matrix_logit$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+## Decision Trees
+```{r}
+library(tree)
+
+# Train the classification tree
+tree_model <- tree(Landmine_Type ~ ., data = train_data)
+
+# Make predictions on the test data
+tree_predictions <- predict(tree_model, newdata = test_data, type = "class")
+
+# View the predictions
+head(tree_predictions)
+```
+
+Printing evaluation metrics
+```{r}
+# Define a confusion matrix
+conf_matrix_tree = confusionMatrix(data = tree_predictions, reference = test_data$Landmine_Type)
+conf_matrix_tree
+
+# Extract accuracy
+accuracy = conf_matrix_tree$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+## Random Forests
+```{r}
+library(randomForest)
+
+# Train the Random Forest classifier
+rf_model <- randomForest(Landmine_Type ~ ., data = train_data)
+
+# Make predictions on the test data
+rf_predictions <- predict(rf_model, newdata = test_data)
+
+# View the predictions
+head(rf_predictions)
+```
+
+Printing evaluation metrics
+```{r}
+# Define a confusion matrix
+conf_matrix_rf = confusionMatrix(data = rf_predictions, reference = test_data$Landmine_Type)
+conf_matrix_rf
+
+# Extract accuracy
+accuracy = conf_matrix_rf$overall["Accuracy"]
+
+print(paste("Accuracy:", accuracy))
+```
+
+
+# Results
+
+The dataset consisted of 4 columns. We had 2 continuous value columns, height and voltage measurement. Soil type was a categorical variable that consisted of 6 types. The target variable was Mine type. We ran several classification algorithms to classify the mines into the predetermined labels.
+
+The data had no missing values. The height column had some outliers which were removed to improve accuracy. The data was split into test and train samples.
+
+Overall, the data was clean but too limited to achieve reasonable accuracy. After removing outliers we had around 300 observations which is too less for 3 features of which one was categorical. All our models give a max accuracy of around 45%.

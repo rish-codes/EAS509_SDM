@@ -1,0 +1,264 @@
+---
+title: "harinris_project2"
+author: "Harin Rishabh"
+date: "2024-04-29"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(readr)
+library(forecast)
+library(zoo)
+```
+
+# Plotting timeseries as is
+```{r}
+# Load the data
+oil_data <- read_csv("/Users/rishabh/Development/EAS509_SDM2/harinris_project2/oil.csv")
+spec(oil_data)
+# Convert the date to Date type for plotting
+oil_data$date <- as.Date(oil_data$date)
+# Suppressing the column type information message
+oil_data <- read_csv("/Users/rishabh/Development/EAS509_SDM2/harinris_project2/oil.csv", show_col_types = FALSE, col_types = cols(
+  date = col_date(),
+  dcoilwtico = col_double()
+))
+
+# Plot the time series
+ggplot(oil_data, aes(x=date, y=dcoilwtico)) +
+  geom_line() +
+  labs(title="Daily Oil Prices", x="Date", y="Oil Price (WTI)") +
+  theme_minimal()
+
+```
+This warning indicates that there are rows with NA values for dcoilwtico, which are being removed when plotting the line graph. Missing values in time series data are common, especially on dates when no trading occurs or data wasn't recorded.
+
+So we perform some steps to fill in the missing values 
+
+# Filling in missing values using linear interpolation 
+```{r}
+# Ensure the zoo package is installed
+if (!require(zoo)) install.packages("zoo", dependencies=TRUE)
+
+# Load the zoo package
+library(zoo)
+
+# Check for missing values in the oil prices
+missing_count <- sum(is.na(oil_data$dcoilwtico))
+print(paste("Number of missing values in oil prices:", missing_count))
+
+# If there are missing values, impute them
+if (missing_count > 0) {
+  # Impute missing values using linear interpolation
+  oil_data$dcoilwtico <- na.approx(oil_data$dcoilwtico, na.rm = FALSE)
+  
+  # In case there are NAs remaining at the beginning or end, use na.fill
+  oil_data$dcoilwtico <- na.fill(oil_data$dcoilwtico, fill = "extend")
+}
+
+# Re-plot the time series with imputed data
+ggplot(oil_data, aes(x = date, y = dcoilwtico)) +
+  geom_line() +
+  labs(title = "Daily Oil Prices (Imputed)", x = "Date", y = "Price") +
+  theme_minimal()
+
+```
+
+## Checking for missing values after imputing
+```{r}
+# Check for missing values in the oil prices
+missing_count <- sum(is.na(oil_data$dcoilwtico))
+print(paste("Number of missing values in oil prices:", missing_count))
+```
+
+# Plotting trend and seasonality components to inspect visually
+```{r}
+library(zoo)
+library(ggplot2)
+# Convert the date to Date type for plotting
+oil_data$date <- as.Date(oil_data$date)
+
+# Impute missing values using linear interpolation 
+oil_data$dcoilwtico <- na.approx(oil_data$dcoilwtico, na.rm = FALSE)
+oil_data$dcoilwtico <- na.fill(oil_data$dcoilwtico, fill = "extend")
+# Convert to a time series object
+oil_ts <- ts(oil_data$dcoilwtico, frequency = 365)
+# Plot the time series with imputed data
+ggplot(oil_data, aes(x = date, y = dcoilwtico)) +
+  geom_line() +
+  labs(title = "Daily Oil Prices (Imputed)", x = "Date", y = "Price") +
+  theme_minimal()
+
+# To visually inspect for trend and seasonality
+oil_data_ts <- ts(oil_data$dcoilwtico, frequency = 365)  # Assuming daily data with yearly seasonality
+decomposed <- decompose(oil_data_ts)
+plot(decomposed)
+```
+Trend: From about the middle of 2014 until the beginning of 2016, there was a noticeable declining trend. After that, the price levelled out and even began to slightly recover. This evolution is very clearly shown by the trend component, which is essential for comprehending the long-term movement in pricing.
+
+Seasonality: There seems to be some volatility in the seasonal component, suggesting that there is a regular variation throughout each year. Still, in relation to the general trend and data noise, the amplitude of these seasonal oscillations is negligible. This shows that although seasonal influences may exist, they do not appear to be the main characteristic of this time series.
+
+Random Component: The time series' "irregular" or "random" component, which represents the noise left over after trend and seasonality are taken into consideration, exhibits a great deal of unpredictability. This suggests that there are numerous variables that affect daily oil prices in addition to the trend and seasonal elements.
+
+In summary, a noteworthy pattern has been noted, particularly a sudden drop that was followed by stability. While present, seasonal impacts are not predominant.The random component indicates that the data is highly volatile. This volatility may be caused by changes in market sentiment, economic data releases, or geopolitical events that are not seasonal or trend-based.
+
+
+## Q5)
+### ETS Models:
+A type of statistical models called ETS models is employed in time series forecasting. A time series is broken down into three parts by them: error, trend, and seasonality. The following is what each part stands for:
+
+Error (E): The data's random variation that cannot be linked to a pattern or seasonality is captured by this component. It shows the remaining variation when seasonality and trend are taken out.
+Trend (T): The long-term movement or direction of the time series is represented by this component. It can be multiplicative, changing the pace of growth over time, or additive, changing the rate of change over time at a fixed rate.
+Seasonality (S): This component captures the periodic fluctuations or patterns in the data that occur at fixed intervals, such as daily, weekly, or yearly. Seasonality can also be additive or multiplicative.
+ETS models are specified using three letters, each indicating the type of model for the Error, Trend, and Seasonality components. The possible values are:
+
+A: Additive
+M: Multiplicative
+N: None (absence of the component)
+For example:
+
+ETS(A,A,A) indicates additive error, additive trend, and additive seasonality.
+ETS(M,A,N) indicates multiplicative error, additive trend, and no seasonality.
+To fit an ETS model, you typically estimate the smoothing parameters (α, β, γ) and initial values for the level (l), trend (b), and seasonal components (s). These parameters control the degree of smoothing applied to each component.
+
+### Holt-Winters Models:
+Extensive smoothing is extended to manage seasonality in Holt-Winters models, commonly referred to as triple exponential smoothing models. Three smoothing equations are included in them: one for the seasonal component (γ), one for the trend (β), and one for the level (α). This is how they function:
+Level Equation: Using the observed value and the trend estimate from the previous time step, it updates the level estimate.
+Level (lt) = (1 - α) * + α * (Observation - Seasonal Component) (Trend + Level)
+Trend Equation: The difference between the current level and the prior level is used to update the trend estimate.
+Trend (bt) = (1 - β) * Trend + β * (Level - Previous Level)
+Seasonal Equation: It updates the seasonal component estimate based on the observed value and the level and trend estimates.
+Seasonal Component (st) = γ * (Observation - Level) + (1 - γ) * Seasonal Component
+Holt-Winters models can be either additive or multiplicative, depending on whether the seasonal component is added to or multiplied by the level and trend. They are particularly useful for time series data with trend and seasonality.
+
+To fit a Holt-Winters model, you estimate the smoothing parameters (α, β, γ) and initial values for the level, trend, and seasonal components. These parameters control the degree of smoothing applied to each component.
+
+##Q6)
+
+Based on the accuracy metrics, the ETS model seems to perform the best on the training set, with the lowest RMSE and MAE. However, it's important to note that the test set performance of all models is considerably worse, indicating potential overfitting or inadequacy of the models to generalize the unseen data.
+
+Regarding the presence of trend and seasonality in the data, the analysis suggests the existence of a noticeable declining trend from mid-2014 to early 2016, followed by a leveling out and slight recovery. Seasonal influences are present but not predominant, indicating some regular variation throughout each year. The random component suggests high volatility in the data, possibly influenced by various factors like market sentiment, economic data releases, or geopolitical events.
+
+To suggest a suitable model for the data, considering the information provided, the ETS model may be preferred due to its better performance on the training set and its capability to capture trend and seasonality components effectively. However, further validation and refinement may be necessary to improve the model's performance on unseen data.
+  
+##7
+```{r}
+
+if (!require(forecast)) install.packages("forecast")
+library(forecast)
+
+# Load and prepare the data
+oil_data <- read.csv("/Users/rishabh/Development/EAS509_SDM2/harinris_project2/oil.csv")
+oil_data$date <- as.Date(oil_data$date)
+
+# Ensure no missing values
+oil_data$dcoilwtico <- na.approx(oil_data$dcoilwtico, na.rm = FALSE)
+oil_data$dcoilwtico <- na.fill(oil_data$dcoilwtico, fill = "extend")
+
+# Convert to a time series object
+oil_ts <- ts(oil_data$dcoilwtico, frequency = 365)
+
+# Split the data
+train_length <- length(oil_ts) - 30
+train_set <- oil_ts[1:train_length]
+test_set <- oil_ts[(train_length + 1):length(oil_ts)]
+
+# Fit an ETS model
+ets_model <- ets(train_set)
+forecast_ets <- forecast(ets_model, h=30)
+accuracy_ets <- accuracy(forecast_ets, test_set)
+
+# Fit an ARIMA model
+arima_model <- auto.arima(train_set)
+forecast_arima <- forecast(arima_model, h=30)
+accuracy_arima <- accuracy(forecast_arima, test_set)
+
+# Fit a Holt-Winters model, trying additive first
+hw_model <- HoltWinters(oil_ts)
+forecast_hw <- forecast(hw_model, h=30)
+accuracy_hw <- accuracy(forecast_hw, test_set)
+
+# Print the model summaries and accuracy results
+print("ETS Model Summary:")
+print(summary(ets_model))
+print("ETS Model Accuracy:")
+print(accuracy_ets)
+
+print("\nARIMA Model Summary:")
+print(summary(arima_model))
+print("ARIMA Model Accuracy:")
+print(accuracy_arima)
+
+print("\nHolt-Winters Model Summary:")
+print(summary(hw_model))
+print("Holt-Winters Model Accuracy:")
+print(accuracy_hw)
+
+
+```
+
+##8)
+```{r}
+# Load necessary libraries
+library(forecast)
+
+# Assuming you have the training and test sets named train_set and test_set respectively
+
+# Fit ETS model
+ets_model <- ets(train_set)
+ets_train_rmse <- sqrt(mean(ets_model$residuals^2))
+ets_test_rmse <- sqrt(mean((test_set - forecast(ets_model, h = length(test_set))$mean)^2))
+
+# Fit ARIMA model
+arima_model <- auto.arima(train_set)
+arima_train_rmse <- sqrt(mean(arima_model$residuals^2))
+arima_test_rmse <- sqrt(mean((test_set - forecast(arima_model, h = length(test_set))$mean)^2))
+
+# Calculate RMSE for Holt-Winters Model
+
+hw_train_rmse <- sqrt(mean((train_set - hw_model$fitted)^2))
+hw_test_rmse <- sqrt(mean((test_set - forecast(hw_model, h = length(test_set))$mean)^2))
+
+# Print RMSE values
+cat("\nETS Model RMSE (Training):", ets_train_rmse, "\n")
+cat("ETS Model RMSE (Test):", ets_test_rmse, "\n\n")
+
+cat("ARIMA Model RMSE (Training):", arima_train_rmse, "\n")
+cat("ARIMA Model RMSE (Test):", arima_test_rmse, "\n\n")
+
+cat("Holt-Winters Model RMSE (Training):", hw_train_rmse, "\n")
+cat("Holt-Winters Model RMSE (Test):", hw_test_rmse, "\n")
+
+```
+
+# Trying Seasonal Trend Decomposition using LOESS (STL) model
+```{r}
+stl_model <- stl(oil_ts, s.window = "periodic")
+trend <- stl_model$time.series[, "trend"]
+seasonal <- stl_model$time.series[, "seasonal"]
+residual <- stl_model$time.series[, "remainder"]
+forecast_stl <- forecast(ts(trend, frequency=365))
+accuracy_stl <- accuracy(forecast_stl, test_set)
+print("Seasonal Trend Decomposition using LOESS (STL) Model Accuracy:")
+print(accuracy_stl)
+```
+
+```{r}
+stl_train_rmse <- sqrt(mean((trend[1:length(train_set)] - train_set)^2))
+stl_test_rmse <- sqrt(mean((test_set - forecast(stl_model, h = length(test_set))$mean)^2))
+cat("Seasonal Trend Decomposition using LOESS Model RMSE (Training):", stl_train_rmse, "\n")
+cat("Seasonal Trend Decomposition using LOESS Model RMSE (Test):", stl_test_rmse, "\n")
+```
+
+# Results
+The ETS and ARIMA models perform similarly on the training set based on the RMSE values, with the ETS model having a little lower RMSE. Nonetheless, with a smaller RMSE, the ETS model beats the ARIMA model on the test set.
+
+In contrast to the ETS and ARIMA models, the Holt-Winters model has a significantly larger RMSE on both the training and test sets. This suggests that this dataset may not be as well-suited for the Holt-Winters model.
+
+On trying Seasonal Trend Decomposition using LOESS Model, we actually get decent accuracy as it decomposes the seasonal, trend and residual components from the timeseries. This model gives the lower RMSE than the Holt-Winters model.
+
+Because the STL model has the lowest RMSE on both the training and test sets, it seems to be the best option for predicting this specific time series data based on the RMSE metric.

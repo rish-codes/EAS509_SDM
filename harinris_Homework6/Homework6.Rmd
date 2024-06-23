@@ -1,0 +1,325 @@
+---
+title: "harinris_Homework6"
+author: "Harin Rishabh"
+date: "2024-05-04"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Lab 11.8
+## 11.8.1-Brain Cancer Data
+
+```{r}
+library(ISLR2)
+```
+
+```{r}
+names(BrainCancer)
+```
+```{r}
+attach(BrainCancer)
+table(sex)
+```
+```{r}
+table(diagnosis)
+```
+
+```{r}
+table(status)
+```
+
+```{r}
+length(BrainCancer$time)
+length(BrainCancer$status)
+```
+```{r}
+class(BrainCancer$time)
+class(BrainCancer$status)
+
+```
+
+
+```{r}
+str(BrainCancer)
+head(BrainCancer)
+
+```
+```{r}
+library(survival)
+
+surv_obj <- Surv(BrainCancer$time, BrainCancer$status)
+
+fit.surv <- survfit(surv_obj ~ 1)
+
+plot(fit.surv, xlab = "Months",
+ylab = "Estimated Probability of Survival")
+
+```
+
+```{r}
+
+BrainCancer$sex <- factor(BrainCancer$sex)
+
+fit.sex <- survfit(Surv(time, status) ~ sex, data = BrainCancer)
+
+plot(fit.sex, xlab = "Months", ylab = "Estimated Probability of Survival", col = c(2,4))
+
+legend("bottomleft", legend = levels(BrainCancer$sex), col = c(2, 4), lty = 1)
+```
+
+
+```{r}
+logrank.test <- survdiff(Surv(time, status) ~ sex, data = BrainCancer)
+logrank.test
+
+```
+
+```{r}
+fit.cox <- coxph(Surv(time, status) ~ sex, data = BrainCancer)
+summary(fit.cox)
+
+```
+
+```{r}
+summary(fit.cox)$logtest[1]
+
+```
+```{r}
+summary(fit.cox)$waldtest[1]
+
+```
+```{r}
+summary(fit.cox)$sctest[1]
+```
+```{r}
+logrank.test$chisq
+```
+```{r}
+fit.all <- coxph(Surv(time, status) ~ sex + diagnosis + loc + ki + gtv + stereo, data = BrainCancer)
+
+fit.all
+```
+
+```{r}
+modaldata <- data.frame(
+diagnosis = levels(diagnosis),
+sex = rep("Female", 4),
+loc = rep("Supratentorial", 4),
+ki = rep(mean(ki), 4),
+gtv = rep(mean(gtv), 4),
+stereo = rep("SRT", 4)
+)
+
+```
+
+```{r}
+survplots <- survfit(fit.all, newdata = modaldata)
+plot(survplots, xlab = "Months",
+ylab = "Survival Probability", col = 2:5)
+legend("bottomleft", levels(diagnosis), col = 2:5, lty = 1)
+```
+
+## 11.8.2 - Publication Data
+
+```{r}
+library(survival)
+library(ISLR2)
+fit.posres <- survfit(Surv(time, status) ~ posres, data = Publication)
+
+```
+
+
+```{r}
+plot(fit.posres, xlab = "Months",
+ylab = "Probability of Not Being Published", col = 3:4)
+legend("topright", c("Negative Result", "Positive Result"),
+col = 3:4, lty = 1)
+
+```
+
+```{r}
+
+fit.pub <- coxph(Surv(time, status) ~ posres, data = Publication)
+summary(fit.pub)
+```
+```{r}
+
+logrank.test <- survdiff(Surv(time, status) ~ posres, data = Publication)
+logrank.test
+```
+```{r}
+fit.pub2 <- coxph(Surv(time, status) ~ . - mech, data = Publication)
+summary(fit.pub2)
+
+```
+## 11.8.3 - Call Center Data
+
+```{r}
+
+set.seed(4)
+
+N <- 2000
+
+Operators <- sample(5:15, N, replace = TRUE)
+
+Center <- sample(c("A", "B", "C"), N, replace = TRUE)
+
+Time <- sample(c("Morn.", "After.", "Even."), N, replace = TRUE)
+
+X <- model.matrix(~ Operators + Center + Time)[, -1]
+
+```
+
+
+```{r}
+X[1:5, ]
+```
+```{r}
+true.beta <- c(0.04, -0.3, 0, 0.2, -0.2)
+h.fn <- function(x) return(0.00001 * x)
+```
+
+```{r}
+library(rms)
+library(coxed)
+
+queuing <- sim.survdata(N = N, T = 1000, X = X, beta = true.beta, hazard.fun = h.fn)
+
+names(queuing)
+
+```
+
+```{r}
+head(queuing$data)
+```
+
+```{r}
+mean(queuing$data$failed)
+```
+```{r}
+par(mfrow = c(1, 2))
+
+fit.Center <- survfit(Surv(y, failed) ~ Center, data = queuing$data)
+
+plot(fit.Center, xlab = "Seconds",
+     ylab = "Probability of Still Being on Hold",
+     col = c(2, 4, 5))  # Use different colors for each 'Center'
+
+legend("topright",
+       c("Call Center A", "Call Center B", "Call Center C"),  # Legend labels
+       col = c(2, 4, 5),  # Colors corresponding to each 'Center'
+       lty = 1)  # Line type (solid)
+
+par(mfrow = c(1, 1))
+
+```
+
+
+```{r}
+
+fit.Time <- survfit(Surv(y, failed) ~ Time, data = queuing$data)
+
+plot(fit.Time, xlab = "Seconds",
+     ylab = "Probability of Still Being on Hold",
+     col = c(2, 4, 5))  # Use different colors for each 'Time'
+
+legend("topright",
+       c("Morning", "Afternoon", "Evening"),  # Legend labels
+       col = c(5, 2, 4),  # Colors corresponding to each 'Time'
+       lty = 1)  # Line type (solid)
+```
+
+
+```{r}
+survdiff(Surv(y, failed) ~ Center, data = queuing$data)
+
+```
+```{r}
+survdiff(Surv(y, failed) ~ Time, data = queuing$data)
+
+
+```
+```{r}
+fit.queuing <- coxph(Surv(y, failed) ~ ., data = queuing$data)
+
+fit.queuing
+```
+
+
+# Applied Problem 10 
+## 10. a.
+
+```{r}
+library(ISLR2)
+x <- Surv(BrainCancer$time, BrainCancer$status)
+plot(survfit(x ~ 1),
+  xlab = "Months",
+  ylab = "Estimated Probability of Survival",
+  col = "blue",
+  conf.int = 0.67
+)
+```
+
+
+## 10. b.
+
+```{r}
+library(survival)
+library(dplyr)
+library(ggplot2)
+
+set.seed(123) # for reproducibility
+n <- 100
+time <- rexp(n, rate = 0.1)
+status <- rbinom(n, size = 1, prob = 0.7)
+data <- data.frame(time = time, status = status)
+
+fit <- survfit(Surv(time, status) ~ 1)
+
+n_bootstraps <- 200
+bootstrap_results <- replicate(n_bootstraps, {
+  boot_data <- sample_n(data, size = n, replace = TRUE)
+  survfit(Surv(boot_data$time, boot_data$status) ~ 1)
+}, simplify = FALSE)
+
+bootstrap_surv_probs <- sapply(bootstrap_results, function(boot_result) {
+  approx(boot_result$time, boot_result$surv, xout = fit$time)$y
+})
+
+se <- apply(bootstrap_surv_probs, 1, sd)
+
+plot(fit, xlab = "Months", ylab = "Estimated Probability of Survival", col = "blue", conf.int = 0.67)
+lines(fit$time, fit$surv - se, lty = 2, col = "red")
+lines(fit$time, fit$surv + se, lty = 2, col = "red")
+
+```
+
+
+## 10. c.
+diagnosisHG and ki seem to be significant.
+```{r}
+fit <- coxph(Surv(time, status) ~ sex + diagnosis + loc + ki + gtv + stereo, data = BrainCancer)
+fit
+```
+
+
+## 10. d.
+
+In order to account for additional predictors, we construct a model that includes those predictors. We then utilize this model to forecast new, synthesized data points. Here, we allow `ki` to assume every possible value, while maintaining the other predictors at either their mode or mean values.
+
+```{r}
+library(ggfortify)
+
+modeldata <- data.frame(
+  sex = rep("Female", 5),
+  diagnosis = rep("Meningioma", 5),
+  loc = rep("Supratentorial", 5),
+  ki = c(60, 70, 80, 90, 100),
+  gtv = rep(mean(BrainCancer$gtv), 5),
+  stereo = rep("SRT", 5)
+)
+survplots <- survfit(fit, newdata = modaldata)
+plot(survplots, xlab = "Months", ylab = "Survival Probability", col = 2:6)
+legend("bottomleft", c("60", "70", "80", "90", "100"), col = 2:6, lty = 1)
+```

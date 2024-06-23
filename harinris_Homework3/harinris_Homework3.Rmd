@@ -1,0 +1,228 @@
+---
+title: "harinris_Homework3.rmd"
+author: "Harin Rishabh"
+date: "2024-03-13"
+output: html_document
+---
+
+# Exhibit 4.2
+
+```{r}
+library(TSA)
+```
+
+
+```{r}
+data(ma1.2.s); plot(ma1.2.s,ylab=expression(Y[t]),type='o')
+```
+
+```{r}
+set.seed(12345)
+y=arima.sim(model=list(ma=-c(-0.9)),n=100)
+```
+
+```{r}
+list1=list(a=c(1,2,3),b=4,c=ts(c(5,6,7,8), start=c(2006,2),frequency=4))
+list1
+```
+
+```{r}
+list1$c
+```
+
+```{r}
+str(list1)
+```
+
+# Exhibit 5.1
+
+
+```{r}
+data(oil.price)
+plot(oil.price, ylab='Price per Barrel',type='l')
+```
+
+# Exhibit 5.4
+
+```{r}
+plot(diff(log(oil.price)),ylab='Change in Log(Price)',type='l')
+```
+
+```{r}
+diff(log(oil.price), differences=2)
+```
+
+```{r}
+diff(log(oil.price),diff=2)
+```
+
+```{r}
+data("tempdub")
+diff(tempdub, lag=12)
+```
+
+# Exhibit 5.11
+
+```{r}
+library(MASS)
+```
+
+```{r}
+data(electricity)
+plot(electricity)
+```
+
+```{r}
+boxcox(lm(electricity~1))
+```
+
+
+# Exercise 3
+
+**3.5 a)**\
+Answer - this figure shows a clear, smooth, and cyclical seasonal trend. Values are genereally higher for the summer months and there seems to be an exponential increase long-term.
+```{r}
+library(TSA)
+library(lattice)
+data("wages")
+
+# Get the month names from the 'wages' time series
+months <- month.abb[1:length(wages)]
+
+# Plot the 'wages' time series with month labels
+xyplot(wages, panel = function(x, y, ...) {
+  panel.xyplot(x, y, ...)
+  panel.text(x, y, labels = months)
+})
+```
+
+**3.5 b)**\
+Answer - The monthly percentage difference series looks rather stationary.
+```{r}
+wages_fit1 <- lm(wages ~ time(wages))
+summary(wages_fit1)
+```
+
+```{r}
+wages_rst <- rstudent(wages_fit1)
+```
+
+**3.5 c)**\
+Answer - We still seem to have autocorrelation related to the time and not white noise.
+```{r}
+xyplot(wages_rst ~ time(wages_rst), type = "l",
+       xlab = "Time", ylab = "Studentized residuals")
+```
+
+**3.5 d)**\
+Answer - Fit a linear regression model with time and quadratic time term
+```{r}
+wages_fit2 <- lm(wages ~ time(wages) + I(time(wages)^2))
+summary(wages_fit2)
+```
+
+```{r}
+wages_rst2 <- rstudent(wages_fit2)
+```
+
+**3.5 e)**\
+Answer - This looks more like random noise but there is still clear autocorrelation between the fitted residuals that we have yet to capture in our model.
+```{r}
+xyplot(wages_rst2 ~ time(wages_rst), type = "l",
+       xlab = "Time", ylab = "Studentized residuals")
+```
+
+**3.6 a)**\
+Answer - Clear seasonal trends. There is an initial positive trend from 1975 to around 1981 that then levels out
+```{r}
+data(beersales)
+xyplot(beersales)
+```
+
+**3.6 b)**\
+Answer - It is now evident that the peaks are in the warm months and the slump in the winter and fall months. December is a particular low point, while May, June, and July seem to be the high points.
+```{r}
+months <- c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
+
+xyplot(beersales,
+       panel = function(x, y, ...) {
+         panel.xyplot(x, y, ...)
+         panel.text(x, y, labels = months)
+       })
+```
+
+**3.6 c)**\
+Answer - All comparisons are made against january. The model helpfully explains approximately 0.71 of the variance and is statistically significant. Most of the factors are significant (mostly the winter months as expected).
+```{r}
+library(pander)
+beer_fit1 <- lm(beersales ~ season(beersales))
+pander(summary(beer_fit1))
+```
+
+**3.6 d)**\
+Answer - We don’t have a good fit to our data; in particular, we’re not capturing the long-term trend.
+```{r}
+xyplot(rstudent(beer_fit1) ~ time(beersales), type = "l",
+       xlab = "Time", ylab = "Studentized residuals",
+       panel = function(x, y, ...) {
+         panel.xyplot(x, y, ...)
+         panel.xyplot(x, y, pch = as.vector(season(beersales)), col = 1)
+       })
+```
+
+**3.6 e)**\
+Answer - This model fits the data better, explaining roughly 0.91 of the variance.
+```{r}
+beer_fit2 <- lm(beersales ~ season(beersales) + time(beersales) +
+                  I(time(beersales) ^ 2))
+pander(summary(beer_fit2))
+```
+
+**3.6 f)**\
+Answer - Many of the values are still not being predicted successfully but at least we’re able to model the long term trend better.
+```{r}
+xyplot(rstudent(beer_fit2) ~ time(beersales), type = "l",
+       xlab = "Time", yla = "Studentized residuals",
+       panel = function(x, y, ...) {
+         panel.xyplot(x, y, ...)
+         panel.xyplot(x, y, pch = as.vector(season(beersales)), col = 1)
+       })
+```
+
+**3.12 a)**\
+Answer - First, we just collect the residuals.
+```{r}
+data(beersales)
+beer_quad_seasonal <- lm(beersales ~ time(beersales) + I(time(beersales)^2) +
+                           season(beersales))
+beer_resid <- rstudent(beer_quad_seasonal)
+```
+
+**3.12 b)**\
+Answer - Next, we perform a Runs test.
+```{r}
+runs(beer_resid)
+```
+
+**3.12 c)**\
+Answer - Correlations are significant for several of the lags, leading us to question independence.
+```{r}
+acf(beer_resid)
+```
+
+**3.12 d)**\
+Answer - Normality plots for the beersales series after a linear, quadratic and seasonal fit.
+```{r}
+library(gridExtra)
+figa <- 
+  qqmath(beer_resid, xlab = "Theoretical quantities",
+       asp = 1,
+       ylab = "Studentized residuals",
+       panel = function(x, ...) {
+         panel.qqmathline(x, ...)
+         panel.qqmath(x, ...)
+       })
+
+figb <- densityplot(beer_resid, xlab = "Studentized residuals")
+gridExtra::grid.arrange(figa, figb, ncol = 2)
+```

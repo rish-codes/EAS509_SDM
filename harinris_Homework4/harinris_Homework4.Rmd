@@ -1,0 +1,845 @@
+---
+title: "harinris_Homework4"
+author: "Harin Rishabh"
+date: "2024-04-01"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Problem - 1
+
+## Chapter 6 Commands
+
+
+```{r}
+library(TSA) # Load the TSA package for time series analysis
+data(ma1.1.s) # Load the dataset ma1.1.s
+acf(ma1.1.s, xaxp=c(0,20,10)) # Compute and plot the autocorrelation function (ACF) of ma1.1.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+```
+
+```{r}
+# Compute and plot the autocorrelation function (ACF) of ma1.1.s
+# ci.type='ma' adds confidence intervals for a moving average (MA) process
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+
+acf(ma1.1.s,ci.type='ma',xaxp=c(0,20,10))
+```
+```{r}
+# Load the dataset ma1.2.s
+data(ma1.2.s); 
+# Compute and plot the autocorrelation function (ACF) of ma1.2.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(ma1.2.s,xaxp=c(0,20,10))
+```
+```{r}
+# Load the dataset ma2.s
+data(ma2.s); 
+# Compute and plot the autocorrelation function (ACF) of ma2.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(ma2.s,xaxp=c(0,20,10))
+```
+```{r}
+# Compute and plot the autocorrelation function (ACF) of ma2.s
+# ci.type='ma' adds confidence intervals for a moving average (MA) process
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(ma2.s,ci.type='ma',xaxp=c(0,20,10))
+```
+```{r}
+# Load the dataset ar1.s
+data(ar1.s); 
+# Compute and plot the autocorrelation function (ACF) of ar1.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(ar1.s,xaxp=c(0,20,10))
+```
+
+```{r}
+# Compute and plot the partial autocorrelation function (PACF) of ar1.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+pacf(ar1.s,xaxp=c(0,20,10))
+```
+```{r}
+# Load the dataset ar2.s
+data(ar2.s)
+# Compute and plot the autocorrelation function (ACF) of ar2.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(ar2.s,xaxp=c(0,20,10))
+```
+```{r}
+# Compute and plot the partial autocorrelation function (PACF) of ar2.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+pacf(ar2.s,xaxp=c(0,20,10))
+```
+```{r}
+# Load the dataset arma11.s
+data(arma11.s)
+
+# Plot arma11.s as a time series with points connected by lines
+# type='o' specifies both points and lines in the plot
+# ylab=expression(Y[t]) sets the y-axis label using a mathematical expression
+plot(arma11.s, type='o',ylab=expression(Y[t]))
+```
+```{r}
+```
+
+
+```{r}
+# Compute and plot the autocorrelation function (ACF) of arma11.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(arma11.s,xaxp=c(0,20,10))
+```
+```{r}
+# Compute and plot the partial autocorrelation function (PACF) of arma11.s
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+pacf(arma11.s,xaxp=c(0,20,10))
+```
+```{r}
+# Compute and plot the extended autocorrelation function (EACF) of arma11.s
+eacf(arma11.s)
+```
+
+```{r}
+# Load the oil.price dataset
+data(oil.price)
+
+# Convert oil.price to a vector and compute the autocorrelation function (ACF)
+# xaxp=c(0,24,12) sets the x-axis range from 0 to 24 with 12 tick marks
+acf(as.vector(oil.price), xaxp=c(0,24,12))
+
+```
+```{r}
+# Compute the logarithm of oil.price, convert it to a vector,
+# take the difference of consecutive elements, and compute the autocorrelation function (ACF)
+# xaxp=c(0,24,12) sets the x-axis range from 0 to 24 with 12 tick marks
+acf(diff(as.vector(log(oil.price))), xaxp=c(0,24,12))
+
+```
+```{r}
+# Load the rwalk dataset
+data(rwalk)
+
+# Take the second order difference of the rwalk dataset,
+# compute the autocorrelation function (ACF), and add confidence intervals for a moving average (MA) process
+# xaxp=c(0,18,9) sets the x-axis range from 0 to 18 with 9 tick marks
+acf(diff(rwalk, difference=2), ci.type='ma', xaxp=c(0,18,9))
+
+```
+```{r}
+```
+
+
+```{r}
+# Take the first order difference of the rwalk dataset,
+# compute the autocorrelation function (ACF), and add confidence intervals for a moving average (MA) process
+# xaxp=c(0,18,9) sets the x-axis range from 0 to 18 with 9 tick marks
+acf(diff(rwalk), ci.type='ma', xaxp=c(0,18,9))
+
+```
+```{r}
+# Set the seed for reproducibility
+set.seed(92397)
+
+# Generate a time series using an ARIMA process
+test = arima.sim(model=list(ar=c(rep(0,11),0.8), ma=c(rep(0,11),0.7)), n=120)
+
+# Fit an ARMA model to the time series using subset selection
+res = armasubsets(y=test, nar=14, nma=14, y.name='test', ar.method='ols')
+
+# Plot the subset selection results
+plot(res)
+
+```
+```{r}
+# Load the larain dataset
+data(larain)
+
+# Create a quantile-quantile (Q-Q) plot of the logarithm of larain
+qqnorm(log(larain))
+
+# Add a line to the Q-Q plot to indicate the expected values under normality
+qqline(log(larain))
+
+```
+```{r}
+# Compute and plot the autocorrelation function (ACF) of the logarithm of larain
+# xaxp=c(0,20,10) sets the x-axis range from 0 to 20 with 10 tick marks
+acf(log(larain), xaxp=c(0,20,10))
+```
+
+```{r}
+# Load the color dataset
+data(color)
+
+# Compute and plot the autocorrelation function (ACF) of the color dataset
+# ci.type='ma' adds confidence intervals for a moving average (MA) process
+acf(color, ci.type='ma')
+
+```
+```{r}
+# Load the hare dataset
+data(hare)
+
+# Apply the Box-Cox transformation to the hare dataset
+BoxCox.ar(hare)
+
+```
+```{r}
+# Compute and plot the autocorrelation function (ACF) of the square root of hare
+acf(hare^.5)
+
+```
+```{r}
+# Compute and plot the partial autocorrelation function (PACF) of the square root of hare
+pacf(hare^.5)
+
+```
+
+```{r}
+ # Take the first difference of the logarithm of the oil.price dataset,
+# and compute and plot the extended autocorrelation function (EACF)
+eacf(diff(log(oil.price)))
+
+```
+
+```{r}
+# Fit an ARMA model to the first difference of the logarithm of the oil.price dataset
+# using subset selection
+res = armasubsets(y=diff(log(oil.price)), nar=7, nma=7, y.name='test', ar.method='ols')
+
+# Plot the subset selection results
+plot(res)
+
+```
+```{r}
+# Compute and plot the autocorrelation function (ACF) of the first difference
+# of the logarithm of the oil.price dataset
+# xaxp=c(0,22,11) sets the x-axis range from 0 to 22 with 11 tick marks
+acf(as.vector(diff(log(oil.price))), xaxp=c(0,22,11))
+
+```
+
+```{r}
+# Compute and plot the partial autocorrelation function (PACF) of the first difference
+# of the logarithm of the oil.price dataset
+# xaxp=c(0,22,11) sets the x-axis range from 0 to 22 with 11 tick marks
+pacf(as.vector(diff(log(oil.price))), xaxp=c(0,22,11))
+
+```
+
+```{r}
+# Fit an autoregressive (AR) model to the differenced rwalk series
+# Specify the maximum order of the AR model using order.max=1 for an AR(1) model
+ar(diff(rwalk), order.max=1)
+
+
+```
+
+```{r}
+library(tseries)
+
+# Perform Augmented Dickey-Fuller (ADF) tests on the 'rwalk' series with different lag selection methods and differencing schemes
+
+# ADF test with lag selection using modes 1 to 8 and Pmax=8, without seasonal differencing
+adf.test(rwalk, k = 8)
+```
+
+```{r}
+# ADF test with lag selection using modes 1 to 8 and Pmax=8, with first-order seasonal differencing
+adf.test(diff(rwalk, differences = 1), k = 8)
+```
+
+```{r}
+# ADF test with lag selection using Pmax=0 (no lag selection), with first-order seasonal differencing
+adf.test(diff(rwalk, differences = 1), k = 0)
+```
+
+
+
+## Chapter 7 Commands
+
+```{r}
+# Below is a function that computes the method of moments estimator of
+# the MA(1) coefficient of an MA(1) model.
+estimate.ma1.mom=function(x){r=acf(x,plot=F)$acf[1]; if (abs(r)<0.5) 
+return((-1+sqrt(1-4*r^2))/(2*r)) else return(NA)}
+```
+
+
+```{r}
+# Load the TSA package for time series analysis
+library(TSA)
+
+# Load the ma1.2.s dataset
+data(ma1.2.s)
+
+# Estimate the parameters of a first-order moving average (MA(1)) model using the method of moments
+estimate.ma1.mom(ma1.2.s)
+
+
+```
+```{r}
+# Load the TSA package for time series analysis
+library(TSA)
+
+# Load the ma1.1.s dataset
+data(ma1.1.s)
+
+# Estimate the parameters of a first-order moving average (MA(1)) model using CSS estimation
+fit <- arima(ma1.1.s, order=c(0,0,1), method="CSS")
+
+# Display the estimated parameters
+fit
+
+```
+```{r}
+# Set the seed for reproducibility
+set.seed(1234)
+
+# Generate a time series using an MA(1) model
+ma1.3.s <- arima.sim(list(ma=0.9), n=60)
+
+# Estimate the parameters of a first-order moving average (MA(1)) model using CSS estimation
+fit <- arima(ma1.3.s, order=c(0,0,1), method="CSS")
+
+# Display the estimated parameters
+fit
+
+```
+```{r}
+# Set the seed for reproducibility
+set.seed(1234)
+
+# Generate a time series using an MA(1) model with ma=-0.5
+ma1.4.s <- arima.sim(list(ma=-0.5), n=60)
+
+# Estimate the parameters of a first-order moving average (MA(1)) model using CSS estimation
+fit <- arima(ma1.4.s, order=c(0,0,1), method="CSS")
+
+# Display the estimated parameters
+fit
+
+```
+```{r}
+# Fit a first-order moving average (MA(1)) model to the ma1.4.s series without including a mean term
+arima(ma1.4.s, order=c(0,0,1), method='CSS', include.mean=FALSE)
+
+# Load the ar1.s dataset
+data(ar1.s)
+
+# Fit an autoregressive (AR(1)) model to the ar1.s dataset using the Yule-Walker method
+ar(ar1.s, order.max=1, AIC=FALSE, method='yw')
+
+# Load the ar1.2.s dataset
+data(ar1.2.s)
+
+# Fit an autoregressive (AR(1)) model to the ar1.2.s dataset using the Yule-Walker method
+ar(ar1.2.s, order.max=1, AIC=FALSE, method='yw')
+
+# Load the ar2.s dataset
+data(ar2.s)
+
+# Fit an autoregressive (AR(2)) model to the ar2.s dataset using the Yule-Walker method
+ar(ar2.s, order.max=2, AIC=FALSE, method='yw')
+
+```
+
+
+```{r}
+data(ar1.s)
+ar(ar1.s,order.max=1,AIC=F,method='yw') # method of moments
+ar(ar1.s,order.max=1,AIC=F,method='ols') # conditional sum of squares
+ar(ar1.s,order.max=1,AIC=F,method='mle') # maximum likelihood
+# The AIC option is set to be False otherwise the function will choose
+# the AR order by minimizing AIC, so that zero order might be chosen.
+```
+```{r}
+data(ar1.2.s)
+ar(ar1.2.s,order.max=1,AIC=F,method='yw') # method of moments
+ar(ar1.2.s,order.max=1,AIC=F,method='ols') # conditional sum of squares
+ar(ar1.2.s,order.max=1,AIC=F,method='mle') # maximum likelihood
+```
+```{r}
+data(ar2.s)
+ar(ar2.s,order.max=2,AIC=F,method='yw') # method of moments
+ar(ar2.s,order.max=2,AIC=F,method='ols') # conditional sum of squares
+ar(ar2.s,order.max=2,AIC=F,method='mle') # maximum likelihood
+```
+```{r}
+data(arma11.s)
+arima(arma11.s, order=c(1,0,1),method='CSS') # conditional sum of squares
+arima(arma11.s, order=c(1,0,1),method='ML') # maximum likelihood
+```
+
+```{r}
+data(color)
+ar(color,order.max=1,AIC=F,method='yw') # method of moments
+ar(color,order.max=1,AIC=F,method='ols') # conditional sum of squares
+ar(color,order.max=1,AIC=F,method='mle') # maximum likelihood
+```
+```{r}
+# Load the hare dataset
+data(hare)
+
+# Fit an autoregressive (AR) model of order 3 to the square root of the hare dataset
+# The ARIMA model is specified as ARIMA(p,d,q) where p is the order of the autoregressive (AR) part,
+# d is the order of differencing, and q is the order of the moving average (MA) part
+arima(sqrt(hare), order=c(3,0,0))
+
+```
+
+
+```{r}
+data(oil.price)
+arima(log(oil.price),order=c(0,1,1),method='CSS') # conditional sum of squares
+arima(log(oil.price),order=c(0,1,1),method='ML') # maximum likelihood
+```
+```{r}
+# Fit an ARIMA(3,0,0) model to the square root of the hare dataset, including the mean term
+res <- arima(sqrt(hare), order=c(3,0,0), include.mean=TRUE)
+
+# Set the seed for reproducibility
+set.seed(12345)
+
+# Method I: Conditional bootstrap with normal distribution assumption
+coefm.cond.norm <- arima.boot(res, cond.boot=TRUE, is.normal=TRUE, B=1000, init=sqrt(hare))
+signif(apply(coefm.cond.norm, 2, function(x) quantile(x, c(0.025, 0.975), na.rm=TRUE)), 3)
+
+# Method II: Conditional bootstrap without normal distribution assumption
+coefm.cond.replace <- arima.boot(res, cond.boot=TRUE, is.normal=FALSE, B=1000, init=sqrt(hare))
+signif(apply(coefm.cond.replace, 2, function(x) quantile(x, c(0.025, 0.975), na.rm=TRUE)), 3)
+
+# Method III: Non-conditional bootstrap with normal distribution assumption
+coefm.norm <- arima.boot(res, cond.boot=FALSE, is.normal=TRUE, ntrans=100, B=1000, init=sqrt(hare))
+signif(apply(coefm.norm, 2, function(x) quantile(x, c(0.025, 0.975), na.rm=TRUE)), 3)
+
+# Method IV: Non-conditional bootstrap without normal distribution assumption
+coefm.replace <- arima.boot(res, cond.boot=FALSE, is.normal=FALSE, ntrans=100, B=1000, init=sqrt(hare))
+signif(apply(coefm.replace, 2, function(x) quantile(x, c(0.025, 0.975), na.rm=TRUE)), 3)
+
+
+```
+```{r}
+#retrieving the dimensions
+dim(coefm.replace)
+
+```
+```{r}
+# Calculate the period for each bootstrap series in coefm.replace
+period.replace <- apply(coefm.replace, 1, function(x) {
+  roots <- polyroot(c(1, -x[1:3]))
+  # Find the complex root with the smallest magnitude
+  min1 <- 1e+9
+  rootc <- NA
+  for (root in roots) {
+    if (abs(Im(root)) < 1e-10) next
+    if (Mod(root) < min1) {min1 <- Mod(root); rootc <- root}
+  }
+  if (is.na(rootc)) period <- NA else period <- 2*pi/abs(Arg(rootc))
+  period
+})
+
+# Count the number of bootstrap series that do not admit a well-defined quasi-period
+sum(is.na(period.replace))
+
+# Compute and display the 95% confidence interval for the period
+quantile(period.replace, c(0.025, 0.975), na.rm=TRUE)
+
+```
+```{r}
+# Create a histogram of the quasi-periods with customized plot window size and point size
+hist(period.replace, prob=TRUE, main="", xlab="quasi-period", axes=FALSE, xlim=c(5,16))
+axis(2)
+axis(1, c(4,6,8,10,12,14,16), c(4,6,8,10,12,14,NA))
+
+```
+```{r}
+qqnorm(period.replace,main="") #Normal Q-Q Plot for the Bootstrap Quasi-period Estimates")
+qqline(period.replace)
+```
+
+## Chapter 8 Commands
+
+
+```{r}
+
+# Create a plot with a customized plot window size and point size
+data(color)
+# Fit an ARIMA(1,0,0) model to the color dataset
+m1.color <- arima(color, order=c(1,0,0))
+# Display the model summary
+m1.color
+# Plot the standardized residuals
+plot(rstandard(m1.color), ylab='Standardized residuals', type='b')
+# Add a horizontal line at y=0 for reference
+abline(h=0)
+
+
+```
+```{r}
+data(hare)
+# Fit an ARIMA(3,0,0) model to the square root of the hare dataset
+m1.hare <- arima(sqrt(hare), order=c(3,0,0))
+# Display the model summary
+m1.hare
+# Fit an ARIMA(3,0,0) model to the square root of the hare dataset with fixed parameters
+m2.hare <- arima(sqrt(hare), order=c(3,0,0), fixed=c(NA,0,NA,NA))
+# Display the model summary
+m2.hare
+# Note that the intercept term is actually the mean in the centered form of the ARMA model,
+# i.e. if y(t) = sqrt(hare) - intercept, then the model is y(t) = 0.919*y(t-1) - 0.5313*y(t-3) + e(t)
+# Plot the standardized residuals of the second model
+plot(rstandard(m2.hare), ylab='Standardized residuals', type='b')
+# Add a horizontal line at y=0 for reference
+abline(h=0)
+
+
+```
+
+```{r}
+data(oil.price)
+# Fit an ARIMA(0,1,1) model to the log-transformed oil price dataset
+m1.oil <- arima(log(oil.price), order=c(0,1,1))
+# Plot the standardized residuals of the model
+plot(rstandard(m1.oil), ylab='Standardized residuals', type='l')
+# Add a horizontal line at y=0 for reference
+abline(h=0)
+
+```
+
+```{r}
+# Create a QQ plot of the residuals from the m1.color model
+qqnorm(residuals(m1.color))
+# Add a line to the QQ plot to show the expected distribution of the residuals
+qqline(residuals(m1.color))
+
+```
+```{r}
+# Create a QQ plot of the residuals from the m1.hare model
+qqnorm(residuals(m1.hare))
+# Add a line to the QQ plot to show the expected distribution of the residuals
+qqline(residuals(m1.hare))
+
+```
+```{r}
+# Create a QQ plot of the residuals from the m1.oil model
+qqnorm(residuals(m1.oil))
+# Add a line to the QQ plot to show the expected distribution of the residuals
+qqline(residuals(m1.oil))
+
+```
+```{r}
+# Create a plot with a customized plot window size and point size
+# Plot the autocorrelation function (ACF) of the residuals from the m1.color model
+acf(residuals(m1.color), main='Sample ACF of Residuals from AR(1) Model for Color')
+
+```
+
+```{r}
+# Plot the autocorrelation function (ACF) of the residuals from the ARIMA(2,0,0) model for the square root of the hare dataset
+acf(residuals(arima(sqrt(hare), order=c(2,0,0))), main='Sample ACF of Residuals from AR(2) Model for Hare')
+
+```
+```{r}
+# Calculate the autocorrelation function (ACF) of the residuals from the m1.color model
+acf_res <- acf(residuals(m1.color), plot=FALSE)$acf
+# Display the ACF values
+acf_res
+# Display the first 6 ACF values rounded to 2 significant digits
+signif(acf_res[1:6], 2)
+
+```
+```{r}
+# Create a plot with a customized plot window size
+# Plot time series diagnostics for the m1.color model with a goodness-of-fit test of 15 lags
+tsdiag(m1.color, gof=15, omit.initial=FALSE)
+
+```
+
+```{r}
+m1.color 
+```
+```{r}
+# Fit an ARIMA(2,0,0) model to the color dataset
+m2.color <- arima(color, order=c(2,0,0))
+# Display the model summary
+m2.color
+
+```
+```{r}
+# Fit an ARIMA(1,0,1) model to the color dataset
+m3.color <- arima(color, order=c(1,0,1))
+# Display the model summary
+m3.color
+
+```
+```{r}
+# Fit an ARIMA(2,0,1) model to the color dataset
+m4.color <- arima(color, order=c(2,0,1))
+# Display the model summary
+m4.color
+
+```
+
+
+# Exercise Questions
+
+
+## Exercise 6.20
+
+```{r}
+require(ggplot2)
+```
+
+```{r}
+set.seed(0)
+Y = arima.sim(model=list(ar=0.7), n=48)
+```
+
+```{r}
+options(repr.plot.width=12, repr.plot.height=4)
+
+ggplot() +
+    geom_line(aes(x=1:48, y=c(Y)), color='blue') +
+    xlab('') + ylab('') +
+    theme_bw() + theme(text = element_text(size=16), plot.title = element_text(hjust = 0.5))
+```
+
+(a) 
+The theoretical autocorrelations for an AR(1) process follow
+𝜌k=𝜙k, so 𝜌1=0.7 and 𝜌5=(0.7)5=0.16807
+
+(b)
+
+```{r}
+lags = acf(Y, lag.max=5)
+```
+
+```{r}
+lags
+```
+
+(c)
+
+```{r}
+set.seed(241357)
+series=arima.sim(n=48,list(ar=0.7))
+```
+
+```{r}
+lags =acf(series,lag.max=5)[1:5]
+```
+
+```{r}
+lags
+```
+
+## Exercise 6.21
+
+```{r}
+require(ggplot2)
+require(latex2exp)
+```
+
+```{r}
+set.seed(10)
+Y = arima.sim(model=list(ma=-0.5), n=60)
+```
+
+
+(a) The theoretical autocorrelation is 𝜌1=−𝜃/(1+𝜃2)=−0.4.
+
+(b)
+```{r}
+lags = acf(Y, lag.max=1)
+```
+
+```{r}
+lags
+```
+
+(c)
+```{r}
+set.seed(6453421)
+Y = arima.sim(model=list(ma=-0.5), n=60)
+```
+
+```{r}
+lags = acf(Y, lag.max=1)[1]
+```
+
+```{r}
+lags
+```
+
+## Exercise 6.25
+
+(a)
+
+```{r}
+ACF <- round(ARMAacf(ar=0.7,lag.max=10),digits=3)
+plot(y=ACF[-1],x=1:10,xlab='Lag',ylab='ACF',type='h'); abline(h=0)
+```
+
+(b)
+
+```{r}
+set.seed(123)
+series=arima.sim(n=36,list(ar=0.7))
+acf(series)
+```
+
+The pattern match is not that good but we know that n = 36.
+
+```{r}
+ACF=ARMAacf(ar=0.7,lag.max=10)
+plot(y=ACF[-1],x=1:10,xlab='Lag',ylab='ACF',type='h'); abline(h=0)
+```
+
+(c) For the AR(1) model, 𝜙11=𝜙=0.7 and 𝜙𝑘𝑘=0 for 𝑘>1.
+Theoretical auto-correlation for phi_11 = 0.7 and for phi_kk=0
+
+(d)
+Standard Deviation = $ = = 0.12 $. The sample auto correlation r1 is within two standard deviations.
+```{r}
+plot(y=ACF[-1],x=1:10,xlab='Lag',ylab='ACF',type='h'); abline(h=0)
+```
+
+(e)
+The pattern is a decent match.
+```{r}
+pacf(series)
+```
+
+## Exercise 6.36
+
+(a)
+
+```{r}
+data(robot)
+plot(robot, type='o',ylab='Robot End Position')
+```
+
+From this plot we might try a stationary model but there is also enough “drift” that we might also suspect non-stationarity
+
+(b)
+
+```{r}
+acf(robot)
+```
+
+```{r}
+pacf(robot)
+```
+
+From this plot we might try a stationary model but there is also enough “drift” that we might also suspect non-stationarity
+
+(c)
+
+```{r}
+eacf(robot)
+```
+The EACF suggests an ARMA(1,1) model
+
+
+## Exercise 6.37
+
+```{r}
+data(larain)
+eacf(log(larain))
+```
+
+The EACF table for the Los Angeles rainfall series, which is dominated by “o”s at lower AR and MA orders, indicates non-significant autocorrelations, consistent with white noise characteristics.
+
+## Exercise 8.4
+
+(a)
+
+```{r}
+set.seed(123)
+Y = arima.sim(model=list(ar=0.5), n=30)
+```
+
+```{r}
+model = arima(Y, order=c(1,0,0), method='ML')
+plot(rstandard(model),ylab ='Standardized Residuals in AR(1) model', type='o'); 
+abline(h=0)
+```
+
+Residuals look random.
+
+(b)
+
+```{r}
+qqnorm(model$resid); qqline(model$resid)
+```
+
+Lower part contains points outside of the range. We can do Shapiro-Wilk to verify normality.
+
+```{r}
+shapiro.test(model$resid)
+```
+
+The test fails to reject normality.
+
+(c)
+The sample acf at lag 4 is statistically signifi cant among all autocorrelations observed.
+```{r}
+acf(residuals(model))
+```
+
+(d)
+
+```{r}
+LB.test(model,lag=8)
+tsdiag(model)
+```
+
+The test does not reject randomness of error based on the first 8 autocorrelations.
+
+## Exercise 8.5
+
+```{r}
+set.seed(2000)
+Y = arima.sim(model=list(ma=-0.5), n=36)
+```
+
+(a)
+
+```{r}
+model = arima(Y, order=c(0,0,1), method='ML')
+plot(rstandard(model),ylab ='Residuals', type='o')
+```
+
+Residuals look random.
+
+(b)
+
+```{r}
+qqnorm(model$resid)
+qqline(model$resid)
+```
+
+The residuals look normal. Doing Shapiro-Wilk test.
+
+```{r}
+shapiro.test(model$resid)
+```
+
+The Shapiro-Wilk test fails to reject normality.
+
+(c)
+
+```{r}
+acf(residuals(model))
+```
+
+ACF suggests the residuals are white noise.
+
+(d)
+
+```{r}
+LB.test(model,lag=6)
+```
+
+The test does not reject randomness of error based on the first 6 autocorrelations.

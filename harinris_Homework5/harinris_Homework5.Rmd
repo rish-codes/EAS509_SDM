@@ -1,0 +1,429 @@
+---
+title: "harinris_Homework5"
+author: "Harin Rishabh"
+date: "2024-04-21"
+output: html_document
+---
+
+# Chapter 9 - R Commands
+
+## Exhibit 9.1
+
+```{r}
+library(TSA)
+data(color)
+m1.color = arima(color, order=c(1,0,0))
+m1.color 
+```
+
+## Exhibit 9.2
+
+```{r}
+data(tempdub)
+tempdub1=ts(c(tempdub,rep(NA,24)),start=start(tempdub),
+freq=frequency(tempdub))
+har.=harmonic(tempdub,1)
+m5.tempdub=arima(tempdub,order=c(0,0,0),xreg=har.)
+newhar.=harmonic(ts(rep(1,24), start=c(1976,1),freq=12),1)
+plot(m5.tempdub,n.ahead=24,n1=c(1972,1),newxreg=newhar., type='b',ylab='Temperature',xlab='Year')
+```
+
+## Exhibit 9.3 
+
+```{r}
+data(color)
+m1.color=arima(color,order=c(1,0,0))
+plot(m1.color,n.ahead=12,type='b', xlab='Time', ylab='Color Property')
+abline(h=coef(m1.color)[names(coef(m1.color))=='intercept'])
+```
+
+## Exhibit 9.4
+
+```{r}
+data(hare)
+m1.hare=arima(sqrt(hare),order=c(3,0,0))
+plot(m1.hare, n.ahead=25,type='b',xlab='Year',ylab='Sqrt(hare)')
+abline(h=coef(m1.hare)[names(coef(m1.hare))=='intercept'])
+```
+
+
+# Chapter 10 - R Commands
+
+## Exhibit 10.1
+
+```{r}
+data(co2)
+plot(co2,ylab='CO2')
+```
+
+## Exhibit 10.2
+
+```{r}
+plot(window(co2,start=c(2000,1)),ylab='CO2')
+Month=c('J','F','M','A','M','J','J','A','S','O','N','D')
+points(window(co2,start=c(2000,1)),pch=Month)
+```
+
+## Exhibit 10.3
+
+```{r}
+par(mfrow=c(1,2))
+plot(y=ARMAacf(ma=c(0.5,rep(0,10),0.8,0.4),lag.max=13)[-1],x=1:13,type='h',
+xlab='Lag k',ylab=expression(rho[k]),axes=F,ylim=c(0,0.6))
+points(y=ARMAacf(ma=c(0.5,rep(0,10),0.8,0.4),lag.max=13)[-1],x=1:13,pch=20)
+abline(h=0)
+axis(1,at=1:13, labels=c(1,NA,3,NA,5,NA,7,NA,9,NA,11,NA,13))
+axis(2)
+text(x=7,y=.5,labels=expression(list(theta==-0.5,Theta==-0.8)))
+plot(y=ARMAacf(ma=c(-0.5,rep(0,10),0.8,-0.4),lag.max=13)[-1],x=1:13,type='h',
+xlab='Lag k',ylab=expression(rho[k]),axes=F)
+points(y=ARMAacf(ma=c(-0.5,rep(0,10),0.8,-0.4),lag.max=13)[-1],x=1:13,pch=20)
+abline(h=0)
+axis(1,at=1:13, labels=c(1,NA,3,NA,5,NA,7,NA,9,NA,11,NA,13))
+axis(2)
+text(x=7,y=.35,labels=expression(list(theta==0.5,Theta==-0.8)))
+```
+
+## Exhibit 10.5
+
+```{r}
+acf(as.vector(co2),lag.max=36)
+```
+
+## Exhibit 10.6
+
+```{r}
+plot(diff(co2),ylab='First Difference of CO2',xlab='Time')
+```
+
+## Exhibit 10.7
+
+```{r}
+acf(as.vector(diff(co2)),lag.max=36)
+```
+
+## Exhibit 10.8
+
+```{r}
+plot(diff(diff(co2),lag=12),xlab='Time',
+ylab='First and Seasonal Difference of CO2')
+```
+
+## Exhibit 10.9
+
+```{r}
+acf(as.vector(diff(diff(co2),lag=12)),lag.max=36,ci.type='ma')
+```
+
+## Exhibit 10.10
+
+```{r}
+m1.co2=arima(co2,order=c(0,1,1),seasonal=list(order=c(0,1,1),period=12))
+m1.co2
+```
+
+## Exhibit 10.10
+
+```{r}
+plot(window(rstandard(m1.co2),start=c(1995,2)), ylab='Standardized Residuals',type='o')
+abline(h=0)
+```
+
+## Exhibit 10.12
+
+```{r}
+acf(as.vector(window(rstandard(m1.co2),start=c(1995,2))), lag.max=36)
+```
+
+## Exhibit 10.16
+
+```{r}
+plot(m1.co2,n1=c(2003,1),n.ahead=24,xlab='Year',type='o',
+ylab='CO2 Levels')
+```
+
+## Exhibit 10.17
+
+```{r}
+plot(m1.co2,n1=c(2004,1),n.ahead=48,xlab='Year',type='b',
+ylab='CO2 Levels')
+```
+
+# Exercises
+
+
+## Ex 9.9
+```{r}
+set.seed(123)
+series=arima.sim(n=48,list(ar=0.8))+100
+actual=window(series,start=41); series=window(series,end=40)
+```
+
+### a
+```{r}
+model=arima(series,order=c(1,0,0))
+model
+```
+
+### b
+```{r}
+plot(model,n.ahead=8,col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+### c, d
+The forecasts are plotted as solid circles. The actual values are solid circles. They lie within the 95% confidence intervals which is depicted by the dotted line.
+```{r}
+ plot(model,n.ahead=8,ylab='Series, Forecasts, Actuals & Limits',pch=19)
+points(x=(41:48),y=actual,pch=3) # Add the actual future values to the plot
+abline(h=coef(model)[names(coef(model))=='intercept'])
+
+```
+
+### e
+Predictions within 95% confidence intervals.
+```{r}
+set.seed(456)
+series=arima.sim(n=48,list(ar=0.8))+100
+actual=window(series,start=41); series=window(series,end=40)
+model=arima(series,order=c(1,0,0)); model
+
+plot(model,n.ahead=8,col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+
+plot(model,n.ahead=8,pch=19)
+points(x=(41:48),y=actual,pch=3)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+
+## Ex 9.12
+```{r}
+set.seed(123)
+series = arima.sim(model=list(ma=c(-1, 0.6)), n=36) + 100
+actual = window(series,start=33)
+series = window(series,end=32)
+actual
+```
+
+### a
+```{r}
+model=arima(series,order=c(0,0,2))
+model
+```
+
+### b
+```{r}
+result=plot(model,n.ahead=4,col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+
+### c
+The values past lag 2 are the estimated process mean.
+
+### d, e
+The predicted values are pretty close to the actuals and definitely fall between the 95% CI.
+```{r}
+forecast=result$pred
+cbind(actual,forecast)
+```
+
+```{r}
+plot(model,n.ahead=4,type='o',pch=19)
+points(x=(33:36), y=actual, pch=3)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+### f
+The predicted values are pretty close to the actuals and definitely fall between the 95% CI.
+```{r}
+set.seed(456)
+series=arima.sim(n=36,list(ma=c(-1,0.6)))+100
+actual=window(series,start=33); series=window(series,end=32)
+model=arima(series,order=c(0,0,2)); model
+result=plot(model,n.ahead=4,ylab='Series & Forecasts',col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+forecast=result$pred; cbind(actual,forecast)
+plot(model,n.ahead=4,ylab='Series, Forecasts, Actuals & Limits',type='o',pch=19)
+points(x=(33:36),y=actual,pch=3)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+
+## Ex 9.13
+```{r}
+set.seed(123)
+series=arima.sim(n=50,list(ar=0.7,ma=0.5))+100
+actual=window(series,start=41)
+series=window(series,end=40)
+```
+
+### a
+```{r}
+model=arima(series,order=c(1,0,1))
+model
+```
+
+### b
+```{r}
+result=plot(model,n.ahead=10,col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+
+```
+The forecasts approach the series mean.
+
+
+```{r}
+forecast=result$pred
+cbind(actual,forecast)
+
+```
+
+### d
+```{r}
+plot(model,n.ahead=10,ylab='Series, Forecasts, Actuals & Limits',pch=19)
+points(x=(41:50),y=actual,pch=3)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+The predicted series decays towards mean. However, the actual values are pretty far apart. However, the predictions still fall between 95% CI.
+
+### e
+The predicted series decays towards mean. However, the actual values are pretty far apart. However, the predictions still fall between 95% CI.
+```{r}
+set.seed(456)
+series=arima.sim(n=50,list(ar=0.7,ma=0.5))+100
+actual=window(series,start=41); series=window(series,end=40)
+model=arima(series,order=c(1,0,1)); model
+result=plot(model,n.ahead=10,ylab='Series & Forecasts',col=NULL,pch=19)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+forecast=result$pred; cbind(actual,forecast)
+plot(model,n.ahead=10,ylab='Series, Forecasts, Actuals & Limits',pch=19)
+points(x=(41:50),y=actual,pch=3)
+abline(h=coef(model)[names(coef(model))=='intercept'])
+```
+
+## Ex 9.16
+```{r}
+set.seed(123)
+series=(arima.sim(n=45,list(order=c(0,2,2),ma=c(-1,0.75)))[-1])[-1]
+actual=window(series,start=41); series=window(series,end=40)
+```
+
+### a
+```{r}
+model=arima(series,order=c(0,2,2))
+model
+```
+
+### b
+```{r}
+result=plot(model,n.ahead=5,col=NULL,pch=19)
+```
+
+### c
+```{r}
+forecast=result$pred
+cbind(actual,forecast)
+```
+
+```{r}
+plot(model,n1=38,n.ahead=5, pch=19)
+points(x=seq(41,45),y=actual,pch=3)
+```
+The forecast limits spread out as the lead time increases.
+```{r}
+lower=result$lpi; upper=result$upi; cbind(lower,actual,upper)
+```
+The lead 1 forecast is a little above the lower forecast limit so that all of the forecasts are within the 95% limits in this simulation.
+
+## Ex 10.8
+
+### a
+```{r}
+data(co2)
+month.=season(co2)
+trend=time(co2)
+model=lm(co2~month.+trend)
+summary(model)
+```
+All of the regression coefficients are statistically significant except for the seasonal effects for February and June.
+These have p-values just above 0.05.
+
+### b
+99.02%
+
+### c
+There is a seasonal trend.
+```{r}
+acf(residuals(model))
+```
+
+## Ex 10.9
+
+### a
+```{r}
+data(airpass); plot(airpass, type='o',ylab='Air Passengers')
+plot(log(airpass), type='o',ylab='Log(Air Passengers)')
+```
+The graph of the logarithms displays a much more constant variation around the upward “trend.”
+
+### b
+```{r}
+  plot(diff(log(airpass)),type='o',ylab='Difference of Log(Air Passengers)')
+
+```
+
+### c
+```{r}
+plot(diff(log(airpass)),type='l',ylab='Difference of Log(Air Passengers)')
+
+points(diff(log(airpass)),x=time(diff(log(airpass))),
+pch=as.vector(season(diff(log(airpass)))))
+```
+
+The seasonality can be observed by looking at the plotting symbols carefully. Septembers, Octobers, and Novembers are mostly at the low points and Decembers mostly at the high points.
+
+```{r}
+plot(diff(diff(log(airpass)),lag=12),type='l',
+ylab='First & Seasonal Differences of Log(AirPass)')
+points(diff(diff(log(airpass)),lag=12),x=time(diff(diff(log(airpass)),lag=12)),pch=as.vector(season(diff(diff(log(airpass)),lag=12))))
+```
+
+Some Decembers are high and some low. Similarly, some Octobers are high and some low.
+
+### d
+```{r}
+acf(as.vector(diff(diff(log(airpass)),lag=12)),ci.type='ma',
+main='First & Seasonal Differences of Log(AirPass)')
+```
+
+Although there is a “significant” autocorrelation at lag 3, the most prominent autocorrelations are at lags 1 and 12. We need to investigate airline model further.
+```{r}
+model=arima(log(airpass),order=c(0,1,1),seasonal=list(order=c(0,1,1),period=12))
+model
+```
+
+Notice that both the seasonal and nonsrasonal ma parameters are significant.
+
+### f
+```{r}
+tsdiag(model)
+```
+
+None of these three plots indicate difficulties with the model. There are no outliers and little autocorrelation in the
+residuals, both individually and jointly. looking at normality.
+
+```{r}
+hist(residuals(model), xlab='Residuals', main='Histogram of Residuals')
+qqnorm(residuals(model), main="QQ Plot of Residuals")
+qqline(residuals(model))
+```
+
+The distribution of the residuals is symmetric but the Q-Q plot indicates that the tails are lighter than a normal distribution. Let’s investigate using Shapiro-Wilk test.
+```{r}
+shapiro.test(residuals(model))
+```
+
+The Shapiro-Wilk test does not reject normality of the error terms at any of the usual significance levels and we proceed to use the model for forecasting.
+
+```{r}
+plot(model, n1=c(1969, 1), n.ahead=24, pch=19, ylab='Log(Air Passengers)')
+```
+
+The forecasts follow the seasonal and upward “trend” of the time series. The forecast limits provide us with a clear measure of the uncertainty in the forecasts. For completeness, we also plot the forecasts and limits in original terms.
